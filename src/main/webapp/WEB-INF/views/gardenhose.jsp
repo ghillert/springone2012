@@ -40,8 +40,8 @@
 					<a class="brand" href="#">Election Analytics</a>
 					<div class="nav-collapse">
 						<ul class="nav">
-							<li class="active"><a href="<c:url value="/"/>">Twitter Search</a></li>
-							<li><a href='<c:url value="/gardenhose"/>'>Twitter Gardenhose</a></li>
+							<li><a href="<c:url value="/"/>">Twitter Search</a></li>
+							<li class="active"><a href='<c:url value="/gardenhose"/>'>Twitter Gardenhose</a></li>
 							<li><a href="#aboutModal" data-toggle="modal">About</a></li>
 							<li class="dropdown" id="menu-resources">
 								<a class="dropdown-toggle" data-toggle="dropdown" href="#menu-resources">
@@ -59,102 +59,30 @@
 			</div>
 		</div>
 
-		<div class="container">			
+		<div class="container">
 			<div class="row">
-				<div class="span12" id="historical-analysis">
-					<h3>Historical Analysis</h3>
-					<div id="chart_div" style="width: 900px; height: 300px;"></div>
+				<div class="span12" id="tag-cloud">
+					<h3>Tag Cloud</h3>
+					<div id="myCanvasContainer">
+				      <canvas width="600" height="300" id="myCanvas">
+				        <p>Anything in here will be replaced on browsers that support the canvas element</p>
+				      </canvas>
+				    </div>
+				    <div id="tags">
+				      <ul>
+				        <li><a data-weight="10" href="http://www.google.com" target="_blank">Google</a></li>
+				        <li><a data-weight="50" href="/fish">Fish</a></li>
+				        <li><a data-weight="20" href="/chips">Chips</a></li>
+				        <li><a data-weight="10" href="/salt">Salt</a></li>
+				        <li><a data-weight="30"href="/vinegar">Vinegar</a></li>
+				      </ul>
+				    </div>
 				</div>
 			</div>
 			<div class="row">
-				<div class="span12" id="todays-votes">
-					<h3>Todays Votes</h3>
-					<div class="row">
-						<div class="span3">
-							<div style="text-align: right;">
-							<img alt="" src="https://twimg0-a.akamaihd.net/profile_images/2325704772/wrrmef61i6jl91kwkmzq.png" width="164" height="164"/>
-							<div id="todays-votes-obama" style="width: 164px; text-align: center; margin-left: auto;">0</div>
-							</div>
-						</div>
-						<div class="span3">
-							<div style="text-align: center;">
-							<img alt="" src="https://twimg0-a.akamaihd.net/profile_images/2624978379/chw1hdzozfdew973pvjr.png"  width="164" height="164"/>
-							<div id="todays-votes-romney" style="width: 164px; text-align: center; margin-left: auto; margin-right: auto;">0</div>
-							</div>
-							
-						</div>
-						<div class="span3">
-							<div style="text-align: left;">
-							<img alt="" src="https://twimg0-a.akamaihd.net/profile_images/2385531870/ffb6obdzkxc3pk7lvbw2.jpeg"  width="164" height="164"/>
-							<div id="todays-votes-bieber" style="width: 164px; text-align: center; ">0</div>
-							</div>
-							
-						</div>
-					</div>
-				</div>
-			</div>
-			<div class="row">
-				<div class="span12" id="daily-count-break-downs">
-					<h3>Daily Count Break Downs</h3>
-					<div class="row">
-						<div class="span3">
-							<div class="row">
-								<div class="span3"><h4>Last 6 hours</h4></div>
-							</div>
-							<div class="row">
-								<div class="span3" id="daily-count-break-downs-last-6-hours">
-									<table class="table table-striped table-bordered table-hover" style="margin-left: auto; margin-right: auto;">
-									  <thead>
-									  	<tr><th>Candidate</th><th>Votes</th></tr>
-									  </thead>
-									  <tbody>
-									  	<tr><td>Obama</td><td>0</td></tr>
-									  	<tr><td>Romney</td><td>0</td></tr>
-									  	<tr><td>Bieber</td><td>0</td></tr>
-									  </tbody>
-									</table>
-								</div>
-							</div>														
-						</div>
-						<div class="span3">
-							<div class="row">
-								<div class="span3"><h4>Last hour</h4></div>
-							</div>
-							<div class="row">
-								<div class="span3" id="daily-count-break-downs-last-hour">
-									<table class="table table-striped table-bordered table-hover" style="margin-left: auto; margin-right: auto;">
-									  <thead>
-									  	<tr><th>Candidate</th><th>Votes</th></tr>
-									  </thead>
-									  <tbody>
-									  	<tr><td>Obama</td><td>0</td></tr>
-									  	<tr><td>Romney</td><td>0</td></tr>
-									  	<tr><td>Bieber</td><td>0</td></tr>
-									  </tbody>
-									</table>
-								</div>
-							</div>	
-						</div>
-						<div class="span3">
-							<div class="row">
-								<div class="span3"><h4>Last 15 minutes</h4></div>
-							</div>
-							<div class="row">
-								<div class="span3" id="daily-count-break-downs-last-15-min">
-									<table class="table table-striped table-bordered table-hover" style="margin-left: auto; margin-right: auto;">
-									  <thead>
-									  	<tr><th>Candidate</th><th>Votes</th></tr>
-									  </thead>
-									  <tbody>
-									  	<tr><td>Obama</td><td>0</td></tr>
-									  	<tr><td>Romney</td><td>0</td></tr>
-									  	<tr><td>Bieber</td><td>0</td></tr>
-									  </tbody>
-									</table>
-								</div>
-							</div>	
-						</div>
-					</div>
+				<div class="span12" id="message-rates">
+					<h3>Message Rates</h3>
+					<div id='gauge_chart_div' style="width: 500px; margin-left: auto; margin-right: auto;"></div>
 				</div>
 			</div>
 			<hr/>
@@ -392,6 +320,21 @@
 
       }
       
+      $(document).ready(function() {
+
+          if(!$('#myCanvas').tagcanvas({
+            textColour: '#ff0000',
+            outlineColour: '#ff00ff',
+            reverse: true,
+            depth: 0.8,
+            maxSpeed: 0.05,
+            weight: true,
+      		weightFrom: 'data-weight'
+          },'tags')) {
+            // something went wrong, hide the canvas container
+            $('#myCanvasContainer').hide();
+          }
+        });
     </script>    
 	</body>
 </html>

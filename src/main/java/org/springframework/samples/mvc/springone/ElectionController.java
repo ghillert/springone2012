@@ -35,9 +35,14 @@ public class ElectionController {
 
 	@RequestMapping(value="/")
 	public String home() {
-	return "home";
+		return "home";
 	}
 
+	@RequestMapping(value="/gardenhose")
+	public String gardenhose() {
+		return "gardenhose";
+	}
+	
 	private List<MessageRate> getMessageRates() {
 		List<MessageRate> rates = new ArrayList();
 		rates.add(realTimeData.getTweetRate());
