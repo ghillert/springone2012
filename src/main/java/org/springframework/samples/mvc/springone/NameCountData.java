@@ -1,13 +1,13 @@
 package org.springframework.samples.mvc.springone;
 
-public class CandidateData {
+public class NameCountData {
 
 	private String name;
 	
 	private int count;
 
 	
-	public CandidateData(String name, int count) {
+	public NameCountData(String name, int count) {
 		super();
 		this.name = name;
 		this.count = count;

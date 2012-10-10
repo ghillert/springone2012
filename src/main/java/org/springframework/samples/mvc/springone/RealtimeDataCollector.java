@@ -1,6 +1,6 @@
 package org.springframework.samples.mvc.springone;
 
-public class RealtimeData {
+public class RealtimeDataCollector {
 
 	private int todayObama = 4304;
 	
@@ -18,7 +18,7 @@ public class RealtimeData {
 	
 	private MessageRate hashTagHitRate;
 	
-	public RealtimeData() {
+	public RealtimeDataCollector() {
 		lastFewHours = new GroupedData("last6").bieberCount(600).obama(600).romney(2400);
 		lastHour = new GroupedData("lasthour").bieberCount(100).obama(100).romney(400);
 		lastSubHour = new GroupedData("lastsubhour").bieberCount(25).obama(25).romney(100);	

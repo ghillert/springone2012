@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 @Controller
 public class ElectionController {
 
-	private RealtimeData realTimeData = new RealtimeData();
+	private RealtimeDataCollector realTimeData = new RealtimeDataCollector();
 	
 	@RequestMapping(value="/election/counts/historical", method=RequestMethod.GET, produces="application/json")
 	public @ResponseBody List<GroupedData> historicalData() {
@@ -19,7 +19,7 @@ public class ElectionController {
 	}
 	
 	@RequestMapping(value="/election/counts/today", method=RequestMethod.GET, produces="application/json")
-	public @ResponseBody List<CandidateData> todayData() {
+	public @ResponseBody List<NameCountData> todayData() {
 		return getTodayData();
 	}
 	
@@ -31,6 +31,16 @@ public class ElectionController {
 	@RequestMapping(value="/election/monitoring/rates", method=RequestMethod.GET, produces="application/json")
 	public @ResponseBody List<MessageRate> messageRates() {
 		return getMessageRates();
+	}
+	
+	@RequestMapping(value="/twitter/gardenhose/recent", method=RequestMethod.GET, produces="application/json")
+	public @ResponseBody List<NameCountData> gardenhoseRecent() {
+		return getGardenHoseRecent();
+	}
+	
+	@RequestMapping(value="/twitter/gardenhose/historical", method=RequestMethod.GET, produces="application/json")
+	public @ResponseBody List<NameCountData> gardenhoseHistorical() {
+		return getGardenHoseHistorical();
 	}
 
 	@RequestMapping(value="/")
@@ -58,11 +68,11 @@ public class ElectionController {
 		return breakdownToday;
 	}
 	
-	private List<CandidateData> getTodayData() {
-		List<CandidateData> todayData = new ArrayList();
-		todayData.add(new CandidateData("obama", realTimeData.getTodayObama()));
-		todayData.add(new CandidateData("romney", realTimeData.getTodayRomney()));
-		todayData.add(new CandidateData("bieber", realTimeData.getTodayBieber()));		
+	private List<NameCountData> getTodayData() {
+		List<NameCountData> todayData = new ArrayList();
+		todayData.add(new NameCountData("obama", realTimeData.getTodayObama()));
+		todayData.add(new NameCountData("romney", realTimeData.getTodayRomney()));
+		todayData.add(new NameCountData("bieber", realTimeData.getTodayBieber()));		
 		return todayData;
 	}
 
@@ -81,6 +91,29 @@ public class ElectionController {
 		weeklyData.add(thursday);
 		weeklyData.add(friday);
 		return weeklyData;
+	}
+	
+	private List<NameCountData> getGardenHoseRecent() {
+		List<NameCountData> todayData = new ArrayList();
+		todayData.add(new NameCountData("google", 10));		
+		todayData.add(new NameCountData("fish", 50));
+		todayData.add(new NameCountData("chips", 20));
+		todayData.add(new NameCountData("salt", 10));
+		todayData.add(new NameCountData("venigar", 10));			
+		return todayData;
+	}
+	
+	
+	private List<NameCountData> getGardenHoseHistorical() {
+		List<NameCountData> todayData = new ArrayList();
+		todayData.add(new NameCountData("MentionSomeoneWhoCanAlwaysMakeYouSmile", 100));
+		todayData.add(new NameCountData("10CancionesPerfectas", 90));
+		todayData.add(new NameCountData("LoQueMásSeEscuchaEnMiSalón", 60));	
+		todayData.add(new NameCountData("CiteONomeDeUmaPessoaQueVcAma", 50));	
+		todayData.add(new NameCountData("MyWorstFear", 10));	
+		
+			
+		return todayData;
 	}
 
 }
