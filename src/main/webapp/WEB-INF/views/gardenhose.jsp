@@ -61,21 +61,32 @@
 
 		<div class="container">
 			<div class="row">
-				<div class="span12" id="tag-cloud">
-					<h3>Tag Cloud</h3>
-					<div id="myCanvasContainer">
-				      <canvas width="600" height="300" id="myCanvas">
+				<div class="span6">
+					<h3>Garden Hose Recent</h3>
+					<div id="garden-hose-data-recent">Loading...</div>
+				</div>
+				<div class="span6">
+					<div id="garden-hose-data-recent-container">
+				      <canvas width="400" height="300" id="garden-hose-data-recent-canvas" style="display: none;">
 				        <p>Anything in here will be replaced on browsers that support the canvas element</p>
 				      </canvas>
 				    </div>
-				    <div id="tags">
-				      <ul>
-				        <li><a data-weight="10" href="http://www.google.com" target="_blank">Google</a></li>
-				        <li><a data-weight="50" href="/fish">Fish</a></li>
-				        <li><a data-weight="20" href="/chips">Chips</a></li>
-				        <li><a data-weight="10" href="/salt">Salt</a></li>
-				        <li><a data-weight="30"href="/vinegar">Vinegar</a></li>
-				      </ul>
+				    <div id="garden-hose-data-recent-tags">
+				    </div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="span6">
+					<h3>Garden Hose Historical</h3>
+					<div id="garden-hose-data-historical">Loading...</div>
+				</div>
+				<div class="span6">
+					<div id="garden-hose-data-historical-container">
+				      <canvas width="400" height="300" id="garden-hose-data-historical-canvas" style="display: none;">
+				        <p>Anything in here will be replaced on browsers that support the canvas element</p>
+				      </canvas>
+				    </div>
+				    <div id="garden-hose-data-historical-tags">
 				    </div>
 				</div>
 			</div>
@@ -121,17 +132,25 @@
 		<script src="<c:url value='/assets/js/jquery.tagcanvas.js'/>"></script>
 		<script src="<c:url value='/assets/js/custom.js'/>"></script>
 
-		<script id="daily-template" type="text/x-handlebars-template">
+		<script id="garden-hose-template" type="text/x-handlebars-template">
 			<table class="table table-striped table-bordered table-hover" style="margin-left: auto; margin-right: auto;">
 				<thead>
-					<tr><th>Candidate</th><th>Votes</th></tr>
+					<tr><th>Tag</th><th>Count</th></tr>
 				</thead>
 				<tbody>
-					<tr><td>Obama</td><td>{{countObama}}</td></tr>
-					<tr><td>Romney</td><td>{{countRomney}}</td></tr>
-					<tr><td>Bieber</td><td>{{countBieber}}</td></tr>
+					{{#each tag}}
+						<tr><td>{{name}}</td><td>{{count}}</td></tr>
+					{{/each}}
 				</tbody>
 			</table>
+		</script>
+
+		<script id="garden-hose-template-tag-cloud" type="text/x-handlebars-template">
+			<ul>
+				{{#each tag}}
+					<li><a data-weight="{{{weight count}}}" href="https://twitter.com/search?q=%23{{name}}&src=hash" target="_blank">{{name}}</a></li>
+				{{/each}}
+			</ul>
 		</script>
 
 		<script type="text/javascript">
@@ -145,88 +164,8 @@
 				$.mynamespace = {
 						gauge: null,
 						gaugeOptions : null,
-						gaugeHeader: ['Label', 'Value'],
-						barChart : null,
-						barChartOptions : null,
-						barChartDataHeader: ['Date', 'Obama', 'Romney', 'Bieber'],
-						barChartData: [
-					          ['Date', 'Obama', 'Romney', 'Bieber'],
- 					          ['2004',  1000, 400, 2000]
-					        ]
+						gaugeHeader: ['Label', 'Value']
 				};
-				
-				function updateVerticalChart() {
-					
-					$.getJSON('election/counts/historical', function(data) {
-
-						  console.log(data);
-						  
-						  var items = [];
-						  
-						  items.push($.mynamespace.barChartDataHeader);
-
-						  for (var i = 0, len = data.length; i < len; i++) {
-						      var result = data[i];
-						      items.push([result.label, result.obamaCount, result.romneyCount, result.bieberCount]);
-						  } 
-						  console.log(items);
-						  
-						  var data = google.visualization.arrayToDataTable(items);
-						  $.mynamespace.barchart.draw(data, $.mynamespace.barChartOptions	);
-					});
-					
-				}
-				
-				function updateTodaysVote() {
-					
-					$.getJSON('election/counts/today', function(data) {
-
-						  console.log(data);
-						  
-						  var todaysVotesObama  = data[0];
-						  var todaysVotesRomney = data[1];
-						  var todaysVotesBieber = data[2];
-						  
-						  $("#todays-votes-obama").html(todaysVotesObama.count);
-						  $("#todays-votes-romney").html(todaysVotesRomney.count);
-						  $("#todays-votes-bieber").html(todaysVotesBieber.count);
-
-					});
-					
-				}
-				
-				function updateDailyBreakDowns() {
-					
-					function generateHtml(data, divId) {
-						var source   = $("#daily-template").html();
-						  var template = Handlebars.compile(source);
-						  
-						  var context = {
-								  countObama: data.obamaCount,
-								  countRomney: data.romneyCount, 
-								  countBieber: data.bieberCount
-							};
-						  
-						  var html    = template(context);
-						  
-						  $(divId).html(html);
-					}
-					
-					$.getJSON('election/breakdowns/today', function(data) {
-
-						  console.log(data);
-						  
-						  var last6Hours = data[0];
-						  var lastHour   = data[1];
-						  var last15min  = data[2];
-						  
-						  generateHtml(last6Hours, "#daily-count-break-downs-last-6-hours");
-						  generateHtml(lastHour,   "#daily-count-break-downs-last-hour");
-						  generateHtml(last15min,  "#daily-count-break-downs-last-15-min");
-
-					});
-					
-				}
 				
 				function updateMessageRates() {
 					
@@ -252,27 +191,80 @@
 					
 				}
 				
-				$("#updateHistory").click(function() {					
-					updateVerticalChart();
-				});
+				var total = 0;
 
-				$("#updateTodaysVotes").click(function() {					
-					updateTodaysVote();
+				Handlebars.registerHelper('weight', function(count) {
+					  return new Handlebars.SafeString(
+							  count/total * 100
+					  );
 				});
 				
-				$("#updateDailyBreakDowns").click(function() {					
-					updateDailyBreakDowns();
-				});
-				
-				$("#updateMessageRates").click(function() {					
-					updateMessageRates();
-				});
+				function updateGardenHoseData(divId, url) {
+
+					$.getJSON(url, function(data) {
+
+						total = 0;
+						
+						console.log(data);
+
+						for (i in data) {
+					          total = total + data[i].count;
+					    }
+						
+						console.log(total);
+							  
+						var source   = $("#garden-hose-template").html();
+						
+						var template = Handlebars.compile(source);
+						
+						var context = {
+								  tag: data,
+						};
+						
+						var html    = template(context);
+						
+						var sourceCloud   = $("#garden-hose-template-tag-cloud").html();
+						
+						var templateCloud = Handlebars.compile(sourceCloud);
+						
+						var htmlCloud = templateCloud(context);
+
+						$(divId).html(html);
+						
+						console.log(htmlCloud);
+						
+						$(divId + "-canvas").html(htmlCloud);
+						
+						
+						if(!$(divId + "-canvas").tagcanvas({
+				            textColour: '#ff0000',
+				            outlineColour: '#ff00ff',
+				            reverse: true,
+				            depth: 0.8,
+				            maxSpeed: 0.01,
+				            weight: true,
+				            weightMode: "both",
+				            weightGradient: {
+				                    0:"red",
+				                    0.5:"orange",
+				                    1:"blue"
+				                  },
+				      		weightFrom: 'data-weight'
+				          })) {
+				            // something went wrong, hide the canvas container
+				            $('#myCanvasContainer').hide();
+				          } 
+				          
+						$(divId + "-canvas").show();
+
+					});
+					
+				}
 
 				function updateAll() {
-					updateVerticalChart();
-					updateTodaysVote();
-					updateDailyBreakDowns();
 					updateMessageRates();
+					updateGardenHoseData("#garden-hose-data-recent", "twitter/gardenhose/recent");
+					updateGardenHoseData("#garden-hose-data-historical", "twitter/gardenhose/historical");
 					setTimeout(updateAll, 5000);
 				}
 				
@@ -281,22 +273,7 @@
 			});
 		</script>
 
-<script type="text/javascript" src="https://www.google.com/jsapi"></script>
-    <script type="text/javascript">
-      google.load("visualization", "1", {packages:["corechart"]});
-      google.setOnLoadCallback(drawChart);
-      function drawChart() {
-        var data = google.visualization.arrayToDataTable($.mynamespace.barChartData);
-
-        $.mynamespace.barChartOptions = {
-          hAxis: {title: 'Dates', titleTextStyle: {color: 'red'}},
-          vAxis: {title: 'Votes', titleTextStyle: {color: 'red'}}
-        };
-
-        $.mynamespace.barchart =  new google.visualization.ColumnChart(document.getElementById('chart_div'));
-        $.mynamespace.barchart.draw(data, $.mynamespace.barChartOptions);
-      }
-    </script>
+	<script type="text/javascript" src="https://www.google.com/jsapi"></script>
     <script type='text/javascript'>
       google.load('visualization', '1', {packages:['gauge']});
       google.setOnLoadCallback(drawChart);
@@ -322,18 +299,19 @@
       
       $(document).ready(function() {
 
-          if(!$('#myCanvas').tagcanvas({
-            textColour: '#ff0000',
-            outlineColour: '#ff00ff',
-            reverse: true,
-            depth: 0.8,
-            maxSpeed: 0.05,
-            weight: true,
-      		weightFrom: 'data-weight'
-          },'tags')) {
-            // something went wrong, hide the canvas container
-            $('#myCanvasContainer').hide();
-          }
+/*     	  TagCanvas.depth = .95;
+          TagCanvas.textFont = 'Impact, Helvetica, sans-serif';
+          TagCanvas.weight = true;
+          TagCanvas.weightFrom = "data-weight";
+          TagCanvas.weightMode = "both";
+          TagCanvas.weightGradient = {
+            0:"red",
+            0.5:"orange",
+            1:"blue"
+          };
+           */
+          
+           
         });
     </script>    
 	</body>
