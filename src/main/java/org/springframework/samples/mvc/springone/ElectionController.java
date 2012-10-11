@@ -1,20 +1,26 @@
 package org.springframework.samples.mvc.springone;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.springframework.context.ResourceLoaderAware;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 @Controller
-public class ElectionController {
+public class ElectionController implements ResourceLoaderAware {
 
 	private RealtimeDataCollector realTimeData = new RealtimeDataCollector();
 	
-	private String fileName = "/home/mpollack/projects/springone/twitter/public/mrout/part-00000";
+	private String resourceName = "classpath:/test-data/part-00000";
+	private ResourceLoader resourceLoader;
 	
 	@RequestMapping(value="/election/counts/historical", method=RequestMethod.GET, produces="application/json")
 	public @ResponseBody List<GroupedData> historicalData() {
@@ -108,7 +114,18 @@ public class ElectionController {
 	
 	
 	private Set<NameCountData> getGardenHoseHistorical() {
-		Set<NameCountData> todayData = MapReduceResults.getResults(fileName);
+		
+		Set<NameCountData> todayData = MapReduceResults.getResults(resourceName, resourceLoader);
+		/*
+		 * 
+		if (todayData.size() > 50) {
+			Set<NameCountData> reducedData = new HashSet<NameCountData>(); 
+			int i = 0;
+			
+				reducedData.add(e)
+			}
+				
+		}*/
 		/*
 		List<NameCountData> todayData = new ArrayList();
 		todayData.add(new NameCountData("MentionSomeoneWhoCanAlwaysMakeYouSmile", 100));
@@ -119,6 +136,11 @@ public class ElectionController {
 		
 			
 		return todayData;
+	}
+
+	@Override
+	public void setResourceLoader(ResourceLoader resourceLoader) {
+		this.resourceLoader = resourceLoader;
 	}
 
 }
