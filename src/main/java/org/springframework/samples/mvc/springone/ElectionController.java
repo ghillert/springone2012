@@ -2,6 +2,7 @@ package org.springframework.samples.mvc.springone;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,6 +13,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 public class ElectionController {
 
 	private RealtimeDataCollector realTimeData = new RealtimeDataCollector();
+	
+	private String fileName = "/home/mpollack/projects/springone/twitter/public/mrout/part-00000";
 	
 	@RequestMapping(value="/election/counts/historical", method=RequestMethod.GET, produces="application/json")
 	public @ResponseBody List<GroupedData> historicalData() {
@@ -39,7 +42,7 @@ public class ElectionController {
 	}
 	
 	@RequestMapping(value="/twitter/gardenhose/historical", method=RequestMethod.GET, produces="application/json")
-	public @ResponseBody List<NameCountData> gardenhoseHistorical() {
+	public @ResponseBody Set<NameCountData> gardenhoseHistorical() {
 		return getGardenHoseHistorical();
 	}
 
@@ -104,13 +107,15 @@ public class ElectionController {
 	}
 	
 	
-	private List<NameCountData> getGardenHoseHistorical() {
+	private Set<NameCountData> getGardenHoseHistorical() {
+		Set<NameCountData> todayData = MapReduceResults.getResults(fileName);
+		/*
 		List<NameCountData> todayData = new ArrayList();
 		todayData.add(new NameCountData("MentionSomeoneWhoCanAlwaysMakeYouSmile", 100));
 		todayData.add(new NameCountData("10CancionesPerfectas", 90));
 		todayData.add(new NameCountData("LoQueMásSeEscuchaEnMiSalón", 60));	
 		todayData.add(new NameCountData("CiteONomeDeUmaPessoaQueVcAma", 50));	
-		todayData.add(new NameCountData("MyWorstFear", 10));	
+		todayData.add(new NameCountData("MyWorstFear", 10));*/	
 		
 			
 		return todayData;

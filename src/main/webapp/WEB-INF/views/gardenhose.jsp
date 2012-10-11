@@ -274,6 +274,7 @@
 		</script>
 
 	<script type="text/javascript" src="http://www.google.com/jsapi"></script>
+
     <script type='text/javascript'>
       google.load('visualization', '1', {packages:['gauge']});
       google.setOnLoadCallback(drawChart);
