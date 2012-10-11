@@ -61,13 +61,13 @@
 
 		<div class="container">
 			<div class="row">
-				<div class="span6">
+				<div class="span4">
 					<h3>Garden Hose Recent</h3>
 					<div id="garden-hose-data-recent">Loading...</div>
 				</div>
-				<div class="span6">
+				<div class="span8">
 					<div id="garden-hose-data-recent-container">
-				      <canvas width="400" height="300" id="garden-hose-data-recent-canvas" style="display: none;">
+				      <canvas width="400" height="400" id="garden-hose-data-recent-canvas" style="display: none;">
 				        <p>Anything in here will be replaced on browsers that support the canvas element</p>
 				      </canvas>
 				    </div>
@@ -76,13 +76,13 @@
 				</div>
 			</div>
 			<div class="row">
-				<div class="span6">
+				<div class="span4">
 					<h3>Garden Hose Historical</h3>
 					<div id="garden-hose-data-historical">Loading...</div>
 				</div>
-				<div class="span6">
+				<div class="span8">
 					<div id="garden-hose-data-historical-container">
-				      <canvas width="400" height="300" id="garden-hose-data-historical-canvas" style="display: none;">
+				      <canvas width="400" height="400" id="garden-hose-data-historical-canvas" style="display: none;">
 				        <p>Anything in here will be replaced on browsers that support the canvas element</p>
 				      </canvas>
 				    </div>
@@ -195,7 +195,7 @@
 
 				Handlebars.registerHelper('weight', function(count) {
 					  return new Handlebars.SafeString(
-							  count/total * 100
+							  Math.ceil(count/total * 50) + 20
 					  );
 				});
 				
