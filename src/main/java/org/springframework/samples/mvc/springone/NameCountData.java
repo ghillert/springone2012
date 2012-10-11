@@ -1,6 +1,6 @@
 package org.springframework.samples.mvc.springone;
 
-public class NameCountData {
+public class NameCountData implements Comparable {
 
 	private String name;
 	
@@ -27,6 +27,28 @@ public class NameCountData {
 
 	public void setCount(int count) {
 		this.count = count;
+	}
+	
+	
+    @Override
+    public int compareTo(Object obj) {
+    	NameCountData s = (NameCountData) obj;
+        if (name.equals(s.name)) { 
+            return 0;
+        } else {
+            if (count < s.count) {
+                return 1;
+            } else if (count > s.count) {
+                return -1;
+            } else {
+                return name.compareTo(s.name);
+            }
+        }
+    }
+
+	@Override
+	public String toString() {
+		return "NameCountData [name=" + name + ", count=" + count + "]";
 	}
 
 	
