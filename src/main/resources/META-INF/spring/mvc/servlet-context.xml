@@ -12,7 +12,7 @@
 	<!-- DispatcherServlet Context: defines this servlet's request-processing
 		infrastructure -->
 	<mvc:annotation-driven/>
-	
+
 	<context:component-scan base-package="org.springframework.samples.mvc.springone" />
 
 	<!-- Handles HTTP GET requests for /resources/** by efficiently serving

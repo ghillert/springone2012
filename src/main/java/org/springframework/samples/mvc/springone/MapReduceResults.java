@@ -1,10 +1,7 @@
 package org.springframework.samples.mvc.springone;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.InputStreamReader;
-import java.util.Scanner;
 import java.util.TreeSet;
 
 import org.apache.commons.logging.Log;
@@ -26,7 +23,7 @@ public class MapReduceResults {
 				if (tokens.length == 2) {
 					String hashTag = tokens[0].replaceAll("^\"|\"$", "");
 					if (hashTag.length() != 0) {
-						
+
 						Integer count = Integer.valueOf(tokens[1].trim());
 						if (count != null) {
 							NameCountData ncd = new NameCountData(hashTag, count);
@@ -41,7 +38,7 @@ public class MapReduceResults {
 		}
 		//log.debug(results);
 		return results;
-		
+
 	}
 
 

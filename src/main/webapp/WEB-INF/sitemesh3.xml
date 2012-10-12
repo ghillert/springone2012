@@ -1,0 +1,7 @@
+<sitemesh>
+	<mapping                   decorator="/WEB-INF/views/decorators/default.jsp"/>
+	<mapping path="/asset/*"   exclue="true"/>
+	<content-processor>
+		<tag-rule-bundle class="org.sitemesh.content.tagrules.html.Sm2TagRuleBundle"/>
+	</content-processor>
+</sitemesh>
