@@ -137,9 +137,9 @@
 
 							if(!$(divId + "-canvas").tagcanvas({
 								textColour: '#ff0000',
-								outlineColour: '#ff00ff',
+								outlineColour: '#aaaaaa',
 								reverse: true,
-								depth: 0.8,
+								depth: 0,
 								maxSpeed: 0.0,
 								weight: true,
 								weightMode: "both",
