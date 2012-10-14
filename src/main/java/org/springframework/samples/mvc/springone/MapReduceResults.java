@@ -6,14 +6,19 @@ import java.util.TreeSet;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.context.ResourceLoaderAware;
 import org.springframework.core.io.ResourceLoader;
+import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-public class MapReduceResults {
+@Component
+public class MapReduceResults implements ResourceLoaderAware {
 
 	private static final Log log = LogFactory.getLog(MapReduceResults.class);
 
-	public static TreeSet<NameCountData> getResults(String fileName, ResourceLoader resourceLoader) {
+	private ResourceLoader resourceLoader;
+	
+	public TreeSet<NameCountData> getResults(String fileName) {
 		TreeSet<NameCountData> results = new TreeSet<NameCountData>();
 		try {
 			BufferedReader br = new BufferedReader(new InputStreamReader(resourceLoader.getResource(fileName).getInputStream()));
@@ -39,6 +44,11 @@ public class MapReduceResults {
 		//log.debug(results);
 		return results;
 
+	}
+
+	@Override
+	public void setResourceLoader(ResourceLoader resourceLoader) {
+		this.resourceLoader = resourceLoader;
 	}
 
 

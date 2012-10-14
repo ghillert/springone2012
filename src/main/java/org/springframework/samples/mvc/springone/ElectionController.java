@@ -4,7 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ResourceLoaderAware;
+import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,12 +16,18 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 @Controller
-public class ElectionController implements ResourceLoaderAware {
+public class ElectionController implements InitializingBean, ResourceLoaderAware {
 
 	private RealtimeDataCollector realTimeData = new RealtimeDataCollector();
 
-	private String resourceName = "classpath:/test-data/part-00000";
+	@Value("${mapReduceOutputResourceName}")
+	private String resourceName;
+	
+	private String defaultResourceName = "classpath:/test-data/part-00000";
 	private ResourceLoader resourceLoader;
+	
+	@Autowired
+	private MapReduceResults mapReduceResults;
 
 	@RequestMapping(value="/election/counts/historical", method=RequestMethod.GET, produces="application/json")
 	public @ResponseBody List<GroupedData> historicalData() {
@@ -40,8 +50,14 @@ public class ElectionController implements ResourceLoaderAware {
 	}
 
 	@RequestMapping(value="/twitter/gardenhose/recent", method=RequestMethod.GET, produces="application/json")
-	public @ResponseBody List<NameCountData> gardenhoseRecent() {
+	public @ResponseBody Set<NameCountData> gardenhoseRecent() {
 		return getGardenHoseRecent();
+	}
+	
+	@RequestMapping(value="/twitter/gardenhose/recent/generate", method=RequestMethod.GET, produces="application/json")
+	public @ResponseBody String gardenhoseGenerateRecent() {
+		realTimeData.generateGardenHoseRecent();
+		return "ok";
 	}
 
 	@RequestMapping(value="/twitter/gardenhose/historical", method=RequestMethod.GET, produces="application/json")
@@ -99,45 +115,28 @@ public class ElectionController implements ResourceLoaderAware {
 		return weeklyData;
 	}
 
-	private List<NameCountData> getGardenHoseRecent() {
-		List<NameCountData> todayData = new ArrayList<NameCountData>();
-		todayData.add(new NameCountData("google", 10));
-		todayData.add(new NameCountData("fish", 50));
-		todayData.add(new NameCountData("chips", 20));
-		todayData.add(new NameCountData("salt", 10));
-		todayData.add(new NameCountData("venigar", 10));
-		return todayData;
+	private  Set<NameCountData> getGardenHoseRecent() {
+		return realTimeData.getGardenHoseRecent();
 	}
 
 
 	private Set<NameCountData> getGardenHoseHistorical() {
-
-		Set<NameCountData> todayData = MapReduceResults.getResults(resourceName, resourceLoader);
-		/*
-		 *
-		if (todayData.size() > 50) {
-			Set<NameCountData> reducedData = new HashSet<NameCountData>();
-			int i = 0;
-
-				reducedData.add(e)
-			}
-
-		}*/
-		/*
-		List<NameCountData> todayData = new ArrayList();
-		todayData.add(new NameCountData("MentionSomeoneWhoCanAlwaysMakeYouSmile", 100));
-		todayData.add(new NameCountData("10CancionesPerfectas", 90));
-		todayData.add(new NameCountData("LoQueMásSeEscuchaEnMiSalón", 60));
-		todayData.add(new NameCountData("CiteONomeDeUmaPessoaQueVcAma", 50));
-		todayData.add(new NameCountData("MyWorstFear", 10));*/
-
-
+		Set<NameCountData> todayData = mapReduceResults.getResults(resourceName);
 		return todayData;
 	}
 
 	@Override
 	public void setResourceLoader(ResourceLoader resourceLoader) {
 		this.resourceLoader = resourceLoader;
+	}
+
+	@Override
+	public void afterPropertiesSet() throws Exception {
+		Resource resource = resourceLoader.getResource(resourceName);
+		if (!resource.exists()) {
+			this.resourceName = this.defaultResourceName;
+		}
+		
 	}
 
 }
