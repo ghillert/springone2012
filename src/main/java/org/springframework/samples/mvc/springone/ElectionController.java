@@ -84,35 +84,18 @@ public class ElectionController implements InitializingBean, ResourceLoaderAware
 
 	private List<GroupedData> getBreakdowns() {
 		List<GroupedData> breakdownToday = new ArrayList<GroupedData>();
-		breakdownToday.add(realTimeData.getLastFewHours());
+		breakdownToday.add(realTimeData.getLastSixHours());
+		breakdownToday.add(realTimeData.getLastThreeHours());
 		breakdownToday.add(realTimeData.getLastHour());
-		breakdownToday.add(realTimeData.getLastSubHour());
 		return breakdownToday;
 	}
 
 	private List<NameCountData> getTodayData() {
-		List<NameCountData> todayData = new ArrayList<NameCountData>();
-		todayData.add(new NameCountData("obama", realTimeData.getTodayObama()));
-		todayData.add(new NameCountData("romney", realTimeData.getTodayRomney()));
-		todayData.add(new NameCountData("bieber", realTimeData.getTodayBieber()));
-		return todayData;
+		return realTimeData.getTodayData();
 	}
 
 	private List<GroupedData> getHistoricalData() {
-		GroupedData monday = new GroupedData("10/8/2012").bieberCount(400).obama(200).romney(200);
-		GroupedData tuesday = new GroupedData("10/9/2012").bieberCount(500).obama(300).romney(300);
-		GroupedData wednesday = new GroupedData("10/10/2012").bieberCount(450).obama(250).romney(225);
-		GroupedData thursday = new GroupedData("10/11/2012").bieberCount(400).obama(225).romney(250);
-		GroupedData friday = new GroupedData("10/12/2012").bieberCount(300).obama(325).romney(376);
-
-
-		List<GroupedData> weeklyData = new ArrayList<GroupedData>();
-		weeklyData.add(monday);
-		weeklyData.add(tuesday);
-		weeklyData.add(wednesday);
-		weeklyData.add(thursday);
-		weeklyData.add(friday);
-		return weeklyData;
+		return realTimeData.getHistoricalData();
 	}
 
 	private  Set<NameCountData> getGardenHoseRecent() {
