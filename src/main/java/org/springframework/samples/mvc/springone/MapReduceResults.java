@@ -7,6 +7,7 @@ import java.util.TreeSet;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.context.ResourceLoaderAware;
+import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -21,18 +22,23 @@ public class MapReduceResults implements ResourceLoaderAware {
 	public TreeSet<NameCountData> getResults(String fileName) {
 		TreeSet<NameCountData> results = new TreeSet<NameCountData>();
 		try {
-			BufferedReader br = new BufferedReader(new InputStreamReader(resourceLoader.getResource(fileName).getInputStream()));
-			String line;
-			while ((line = br.readLine()) != null) {
-				String[] tokens = StringUtils.tokenizeToStringArray(line, " \r\t\n");
-				if (tokens.length == 2) {
-					String hashTag = tokens[0].replaceAll("^\"|\"$", "");
-					if (hashTag.length() != 0) {
+			Resource resource = resourceLoader.getResource(fileName);
+			if (resource.exists()) {
+				BufferedReader br = new BufferedReader(new InputStreamReader(resource.getInputStream()));
+				String line;
+				while ((line = br.readLine()) != null) {
+					String[] tokens = StringUtils.tokenizeToStringArray(line,
+							" \r\t\n");
+					if (tokens.length == 2) {
+						String hashTag = tokens[0].replaceAll("^\"|\"$", "");
+						if (hashTag.length() != 0) {
 
-						Integer count = Integer.valueOf(tokens[1].trim());
-						if (count != null) {
-							NameCountData ncd = new NameCountData(hashTag, count);
-							results.add(ncd);
+							Integer count = Integer.valueOf(tokens[1].trim());
+							if (count != null) {
+								NameCountData ncd = new NameCountData(hashTag,
+										count);
+								results.add(ncd);
+							}
 						}
 					}
 				}

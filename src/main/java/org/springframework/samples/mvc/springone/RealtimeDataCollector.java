@@ -1,16 +1,25 @@
 package org.springframework.samples.mvc.springone;
 
-import java.util.List;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
 import java.util.Set;
 import java.util.TreeSet;
 
 import org.apache.commons.lang.math.NumberUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.data.redis.connection.srp.SrpConnectionFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations.TypedTuple;
+import org.springframework.util.StringUtils;
 
 public class RealtimeDataCollector {
 
+	private static final Log log = LogFactory.getLog(RealtimeDataCollector.class);
+	
 	private int todayObama = 4304;
 
 	private int todayRomney = 4304;
@@ -86,15 +95,41 @@ public class RealtimeDataCollector {
 		
 		TreeSet<NameCountData> convertedResults = new TreeSet<NameCountData>();
 		for (TypedTuple<String> typedTuple : results) {
-			if (NumberUtils.isNumber(typedTuple.getValue())) {
-				// in Right to left languages, the order is reversed.
-				convertedResults.add(new NameCountData(typedTuple.getScore().toString(), Integer.valueOf(typedTuple.getValue())));
-			} else {
-				convertedResults.add(new NameCountData(typedTuple.getValue(), Integer.valueOf(typedTuple.getScore().intValue())));
+			try {
+			String tag = typedTuple.getValue();
+			String score = typedTuple.getScore().toString();
+			if (StringUtils.hasText(tag) && StringUtils.hasText(score)) {
+				//sometimes hastags are numbers
+				if (NumberUtils.isNumber(tag) && NumberUtils.isNumber(score) && isPureAscii(tag)) {
+					convertedResults.add(new NameCountData(tag, typedTuple.getScore().intValue()));
+				} else if (NumberUtils.isNumber(tag) && !NumberUtils.isNumber(score)) {
+					// in Right to left languages, the order is reversed.
+					// so tag would be a number and often score would be text
+					convertedResults.add(new NameCountData(score, Double.valueOf(tag).intValue()));
+				} else {
+					convertedResults.add(new NameCountData(tag, typedTuple.getScore().intValue()));
+				}
+			}	
+			} catch (NumberFormatException e) {
+				log.error("NumberFormatException" ,e);
 			}
 		}
 		return convertedResults;
 	}
+	
+	  public static boolean isPureAscii(String v) {
+		    byte bytearray []  = v.getBytes();
+		    CharsetDecoder d = Charset.forName("US-ASCII").newDecoder();
+		    try {
+		      CharBuffer r = d.decode(ByteBuffer.wrap(bytearray));
+		      r.toString();
+		    }
+		    catch(CharacterCodingException e) {
+		      return false;
+		    }
+		    return true;
+		  }
+
 
 	public void generateGardenHoseRecent() {
 		addToHashTag("ReplaceAColdplaySongWithLlama", 100.0);
