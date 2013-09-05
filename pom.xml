@@ -14,13 +14,20 @@
 
 	<properties>
 		<java-version>1.6</java-version>
-		<org.springframework-version>4.0.0.M2</org.springframework-version>
+		<org.springframework-version>4.0.0.M3</org.springframework-version>
 		<org.aspectj-version>1.6.9</org.aspectj-version>
 		<org.slf4j-version>1.7.5</org.slf4j-version>
 		<junit.version>4.11</junit.version>
 	</properties>
 
 	<dependencies>
+
+		<dependency>
+			<groupId>org.springframework.xd</groupId>
+			<artifactId>spring-xd-rest-client</artifactId>
+			<version>1.0.0.BUILD-SNAPSHOT</version>
+		</dependency>
+
 		<!-- Spring -->
 		<dependency>
 			<groupId>org.springframework</groupId>
@@ -41,35 +48,48 @@
 		</dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>
+			<artifactId>spring-web</artifactId>
+			<version>${org.springframework-version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
 			<artifactId>spring-websocket</artifactId>
 			<version>${org.springframework-version}</version>
 		</dependency>
-
-
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-tx</artifactId>
+			<version>${org.springframework-version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-context-support</artifactId>
+			<version>${org.springframework-version}</version>
+		</dependency>
 		<dependency>
 			<groupId>org.springframework.data</groupId>
 			<artifactId>spring-data-redis</artifactId>
 			<version>1.0.1.RELEASE</version>
 		</dependency>
-				
+
 		<dependency>
 			<groupId>com.github.spullara.redis</groupId>
 			<artifactId>client</artifactId>
-			<version>0.2</version>
+			<version>0.7</version>
 		</dependency>
-		
+
 		<dependency>
-		  <groupId>commons-lang</groupId>
-		  <artifactId>commons-lang</artifactId>
-		  <version>2.4</version>
+			<groupId>commons-lang</groupId>
+			<artifactId>commons-lang</artifactId>
+			<version>2.6</version>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>joda-time</groupId>
 			<artifactId>joda-time</artifactId>
-			<version>2.1</version>
-		</dependency>	
-				
+			<version>2.2</version>
+		</dependency>
+
 
 		<!-- Logging -->
 
@@ -151,7 +171,7 @@
 		<repository>
 			<id>repo.springsource.org.milestone</id>
 			<name>Spring Framework Maven Milestone Repository</name>
-			<url>https://repo.springsource.org/libs-milestone</url>
+			<url>https://repo.springsource.org/libs-snapshot</url>
 		</repository>
 		<repository>
 			<id>repo.springsource.org.snapshots</id>

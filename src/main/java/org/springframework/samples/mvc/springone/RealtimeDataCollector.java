@@ -6,15 +6,21 @@ import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.joda.time.DateMidnight;
 import org.joda.time.DateTime;
+import org.joda.time.Interval;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
@@ -23,15 +29,17 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.data.redis.core.ZSetOperations.TypedTuple;
 import org.springframework.util.StringUtils;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.xd.rest.client.domain.metrics.AggregateCountsResource;
 
 public class RealtimeDataCollector {
 
 	private static final Log log = LogFactory.getLog(RealtimeDataCollector.class);
-	
+
 	private DateTimeFormatter dailyFormatter = DateTimeFormat.forPattern("yyyy-MM-dd");
-	
+
 	private DateTimeFormatter hourlyFormatter = DateTimeFormat.forPattern("yyyy-MM-dd-HH");
-	
+
 	private int todayObama = 4304;
 
 	private int todayRomney = 4304;
@@ -47,20 +55,20 @@ public class RealtimeDataCollector {
 	private MessageRate tweetRate;
 
 	private MessageRate hashTagHitRate;
-	
+
 	private StringRedisTemplate redisTemplate;
-	
+
 	private StringRedisTemplate jedisTemplate;
 
 	public RealtimeDataCollector() {
-		
+
 		//lastFewHours = new GroupedData("last6").bieberCount(600).obama(600).romney(2400);
 		//lastHour = new GroupedData("lasthour").bieberCount(100).obama(100).romney(400);
 		//lastSubHour = new GroupedData("lastsubhour").bieberCount(25).obama(25).romney(100);
-		
+
 		tweetRate = new MessageRate("tweets", 120);
 		hashTagHitRate = new MessageRate("hashtag-hit", 10);
-		
+
 		//TODO cleanup, configure with DI
 		SrpConnectionFactory connectionFactory = new SrpConnectionFactory();
 		connectionFactory.afterPropertiesSet();
@@ -68,12 +76,12 @@ public class RealtimeDataCollector {
 		stringRedisTemplate.setConnectionFactory(connectionFactory);
 		stringRedisTemplate.afterPropertiesSet();
 		this.redisTemplate = stringRedisTemplate;
-		
+
 		//opsForHash.entries didn't work for SrpConnectionFactory - debug later.
 
 		JedisConnectionFactory cf = new JedisConnectionFactory();
 		cf.afterPropertiesSet();
-		jedisTemplate = new StringRedisTemplate();		
+		jedisTemplate = new StringRedisTemplate();
 		jedisTemplate.setConnectionFactory(cf);
 		jedisTemplate.afterPropertiesSet();
 	}
@@ -90,7 +98,7 @@ public class RealtimeDataCollector {
 
 	public Set<NameCountData> getGardenHoseRecent() {
 		Set<TypedTuple<String>> results = redisTemplate.opsForZSet().rangeByScoreWithScores("hashtags", 0, 100);
-		
+
 		TreeSet<NameCountData> convertedResults = new TreeSet<NameCountData>();
 		for (TypedTuple<String> typedTuple : results) {
 			try {
@@ -107,14 +115,14 @@ public class RealtimeDataCollector {
 				} else {
 					convertedResults.add(new NameCountData(tag, typedTuple.getScore().intValue()));
 				}
-			}	
+			}
 			} catch (NumberFormatException e) {
 				log.error("NumberFormatException" ,e);
 			}
 		}
 		return convertedResults;
 	}
-	
+
 	  public static boolean isPureAscii(String v) {
 		    byte bytearray []  = v.getBytes();
 		    CharsetDecoder d = Charset.forName("US-ASCII").newDecoder();
@@ -134,7 +142,7 @@ public class RealtimeDataCollector {
 		addToHashTag("12ekimmucizesiEnginAkyurek", 90.0);
 		addToHashTag("ATENÇÃO", 30.0);
 		addToHashTag("BEAUTYandaBEAT", 1.0);
-		
+
 	}
 
 	private void addToHashTag(String name, Double value) {
@@ -143,133 +151,212 @@ public class RealtimeDataCollector {
 
 	public List<NameCountData> getTodayData() {
 		List<NameCountData> todayData = new ArrayList<NameCountData>();
-		todayData.add(new NameCountData("obama", getTodayObama()));
-		todayData.add(new NameCountData("romney", getTodayRomney()));
-		todayData.add(new NameCountData("bieber", getTodayBieber()));
+		todayData.add(new NameCountData("obama", getCountForToday("obama")));
+		todayData.add(new NameCountData("romney", getCountForToday("romney")));
+		todayData.add(new NameCountData("bieber", getCountForToday("bieber")));
 		return todayData;
 	}
-	
-	public int getTodayObama() {
-		String dailyTotKey = "tot:" + this.getDailyKey("obama", new DateTime());
-		return Double.valueOf(redisTemplate.opsForValue().get(dailyTotKey)).intValue();
-	}
 
-	public int getTodayRomney() {
-		String dailyTotKey = "tot:" + this.getDailyKey("romney", new DateTime());
-		return Double.valueOf(redisTemplate.opsForValue().get(dailyTotKey)).intValue();
-	}
-
-	public int getTodayBieber() {
-		String dailyTotKey = "tot:" + this.getDailyKey("bieber", new DateTime());
-		return Double.valueOf(redisTemplate.opsForValue().get(dailyTotKey)).intValue();
-	}
-	
 	protected String getDailyKey(String candidate, DateTime dateTime) {
 		return "election:" + candidate + ":" + dailyFormatter.print(dateTime);
 	}
-	
+
 	public int getTotalForCandidateByDate(String candidate, DateTime dateTime) {
 		String dailyTotKey = "tot:" + this.getDailyKey(candidate, dateTime);
-		return Double.valueOf(redisTemplate.opsForValue().get(dailyTotKey)).intValue();
+		String dailyTotValue = redisTemplate.opsForValue().get(dailyTotKey);
+
+		if (dailyTotValue != null) {
+			return Double.valueOf(redisTemplate.opsForValue().get(dailyTotKey)).intValue();
+		}
+
+		return 0;
+
 	}
 
 	public List<GroupedData> getHistoricalData() {
-		ValueOperations<String,String> valueOps = redisTemplate.opsForValue();
-		//redisTemplate.opsForValue().get("tot:election:obama:2012-10-12")		
-		GroupedData friday = new GroupedData("10/12/2012");//.bieberCount(400).obama(200).romney(200);
-		addCountsToGroup(friday, new DateTime(2012, 10, 12, 0, 0));
 
-		GroupedData saturday = new GroupedData("10/13/2012");//.bieberCount(500).obama(300).romney(300);
-		addCountsToGroup(saturday, new DateTime(2012, 10, 13, 0, 0));
-		
-		GroupedData sunday = new GroupedData("10/14/2012");//.bieberCount(450).obama(250).romney(225);
-		addCountsToGroup(sunday, new DateTime(2012, 10, 14, 0, 0));
-		
-		GroupedData monday = new GroupedData("10/15/2012");//.bieberCount(400).obama(225).romney(250);
-		addCountsToGroup(monday, new DateTime(2012, 10, 15, 0, 0));
-	
+		DateTime dateTime = new DateTime();
+
+		DateTimeFormatter formatter = DateTimeFormat.forPattern("MM/dd/yyyy");
+
+		DateMidnight dateTime1 = new DateMidnight(dateTime.minusDays(3));
+		DateMidnight dateTime2 = new DateMidnight(dateTime.minusDays(2));
+		DateMidnight dateTime3 = new DateMidnight(dateTime.minusDays(1));
+		DateMidnight dateTime4 = new DateMidnight(dateTime);
+
+		GroupedData groupedData1 = new GroupedData(dateTime1.toString(formatter)) //"10/12/2012"
+			.bieberCount(this.getCountForDay("bieber", dateTime1))
+			.obama(this.getCountForDay("obama", dateTime1))
+			.romney(this.getCountForDay("romney", dateTime1));
+
+		GroupedData groupedData2 = new GroupedData(dateTime2.toString(formatter))
+		.bieberCount(this.getCountForDay("bieber", dateTime2))
+		.obama(this.getCountForDay("obama", dateTime2))
+		.romney(this.getCountForDay("romney", dateTime2));
+
+		GroupedData groupedData3 = new GroupedData(dateTime3.toString(formatter))
+		.bieberCount(this.getCountForDay("bieber", dateTime3))
+		.obama(this.getCountForDay("obama", dateTime3))
+		.romney(this.getCountForDay("romney", dateTime3));
+
+		GroupedData groupedData4 = new GroupedData(dateTime4.toString(formatter))
+		.bieberCount(this.getCountForDay("bieber", dateTime4))
+		.obama(this.getCountForDay("obama", dateTime4))
+		.romney(this.getCountForDay("romney", dateTime4));
+
 		List<GroupedData> weeklyData = new ArrayList<GroupedData>();
-		weeklyData.add(friday);
-		weeklyData.add(saturday);
-		weeklyData.add(sunday);
-		weeklyData.add(monday);
-		return weeklyData;
-	}	
+		weeklyData.add(groupedData1);
+		weeklyData.add(groupedData2);
+		weeklyData.add(groupedData3);
+		weeklyData.add(groupedData4);
 
-	
-	private void addCountsToGroup(GroupedData groupedData, DateTime dateTime) {
-		groupedData.setObamaCount(getTotalForCandidateByDate("obama", dateTime));
-		groupedData.setRomneyCount(getTotalForCandidateByDate("romney", dateTime));
-		groupedData.setBieberCount(getTotalForCandidateByDate("bieber", dateTime));
+		return weeklyData;
 	}
-	
-	
-	//lastFewHours = new GroupedData("last6").bieberCount(600).obama(600).romney(2400);
-	//lastHour = new GroupedData("lasthour").bieberCount(100).obama(100).romney(400);
-	//lastSubHour = new GroupedData("lastsubhour").bieberCount(25).obama(25).romney(100);
-	
+
 	public GroupedData getLastSixHours() {
 		GroupedData lastSixHours = new GroupedData("last6");
 		DateTime now = new DateTime();
-		lastSixHours.setObamaCount(getCountForLastXHours("obama", now, 6));
-		lastSixHours.setBieberCount(getCountForLastXHours("bieber", now, 6));		
-		lastSixHours.setRomneyCount(getCountForLastXHours("romney", now, 6));	
+		lastSixHours.setObamaCount(getCountForLastXHours("obama", now, 5));
+		lastSixHours.setBieberCount(getCountForLastXHours("bieber", now, 5));
+		lastSixHours.setRomneyCount(getCountForLastXHours("romney", now, 5));
 		return lastSixHours;
 	}
 
-	public GroupedData getLastThreeHours() {				
+	public GroupedData getLastThreeHours() {
 		GroupedData lastThreeHours = new GroupedData("lasthour");
 		DateTime now = new DateTime();
-		lastThreeHours.setObamaCount(getCountForLastXHours("obama", now, 3));
-		lastThreeHours.setBieberCount(getCountForLastXHours("bieber", now, 3));		
-		lastThreeHours.setRomneyCount(getCountForLastXHours("romney", now, 3));			
+		lastThreeHours.setObamaCount(getCountForLastXHours("obama", now, 2));
+		lastThreeHours.setBieberCount(getCountForLastXHours("bieber", now, 2));
+		lastThreeHours.setRomneyCount(getCountForLastXHours("romney", now, 2));
 		return lastThreeHours;
-		
+
 	}
 
 	public GroupedData getLastHour() {
-		//TODO note, name mismatch with UI
 		GroupedData lastHour = new GroupedData("lastsubhour");
 		DateTime now = new DateTime();
-		lastHour.setObamaCount(getCountForHour("obama", now));
-		lastHour.setBieberCount(getCountForHour("bieber", now));		
-		lastHour.setRomneyCount(getCountForHour("romney", now));	
+		lastHour.setObamaCount(getCountForLastXMinutes("obama", now, 59));
+		lastHour.setBieberCount(getCountForLastXMinutes("bieber", now, 59));
+		lastHour.setRomneyCount(getCountForLastXMinutes("romney", now, 59));
 		return lastHour;
 	}
-	
-	
-	private  int getCountForLastXHours(String candidate, DateTime dateTime, int hoursBackInTime) {
-		
-		int totalCount = getCountForHour(candidate, dateTime);
-		for (int i=1; i<=hoursBackInTime; i++) {
-			totalCount += getCountForHour(candidate, dateTime.minusHours(i));
-		}			
-		return totalCount;
-	}
-	
-	private int getCountForHour(String candidate, DateTime today) {
-		
-		String lastHourHashKey = "hash:" + this.getHourlyKey(candidate, today);
-		int totalCount = 0;
-		if (jedisTemplate.hasKey(lastHourHashKey)) {
-			// System.out.println(lastHourHashKey);
-			Map<Object, Object> map = jedisTemplate.opsForHash().entries(
-					lastHourHashKey);
 
-			for (Map.Entry<Object, Object> cursor : map.entrySet()) {
-				// System.out.println(cursor.getKey() + "," +
-				// cursor.getValue());
-				totalCount += Double.valueOf(cursor.getValue().toString())
-						.intValue();
+	public GroupedData getLast15Minutes() {
+		GroupedData lastHour = new GroupedData("last15minutes");
+		DateTime now = new DateTime();
+		lastHour.setObamaCount(getCountForLastXMinutes("obama", now, 14));
+		lastHour.setBieberCount(getCountForLastXMinutes("bieber", now, 14));
+		lastHour.setRomneyCount(getCountForLastXMinutes("romney", now, 14));
+		return lastHour;
+	}
+
+	private  int getCountForToday(String candidate) {
+
+		DateTime dateTime = new DateTime();
+		RestTemplate restTemplate = new RestTemplate();
+		String url = "http://localhost:8080/metrics/aggregate-counters/" + candidate + "Count";
+		AggregateCountsResource count = restTemplate.getForObject(url, AggregateCountsResource.class);
+
+		DateTime currentDateTime = dateTime.hourOfDay().roundCeilingCopy();
+		DateTime beginDateTime = dateTime.hourOfDay().setCopy(0);
+		Interval interval = new Interval(beginDateTime, currentDateTime);
+
+		int totalCount = 0;
+
+		final SortedMap<Date, Long> values = new TreeMap<Date, Long>(Collections.reverseOrder());
+		values.putAll(count.getValues());
+
+		for (Map.Entry<Date, Long> mapEntry : values.entrySet()) {
+			DateTime date = new DateTime(mapEntry.getKey());
+
+			if (interval.contains(date)) {
+				totalCount = totalCount + mapEntry.getValue().intValue();
 			}
-		} else {
-			//System.err.println("no key found for " + lastHourHashKey);
+
 		}
-		//System.out.println(lastHourHashKey + ", total count = "	+ totalCount);
-		//System.out.println("------");
+
 		return totalCount;
 	}
-	public String getHourlyKey(String candidate, DateTime dateTime) {
-		return "election:" + candidate + ":" + hourlyFormatter.print(dateTime);
+
+	private  int getCountForLastXHours(String candidate, DateTime dateTime, int hoursBackInTime) {
+
+		RestTemplate restTemplate = new RestTemplate();
+		String url = "http://localhost:8080/metrics/aggregate-counters/" + candidate + "Count";
+		AggregateCountsResource count = restTemplate.getForObject(url, AggregateCountsResource.class);
+
+		DateTime currentDateTime = dateTime.hourOfDay().roundCeilingCopy();
+		DateTime beginDateTime = dateTime.hourOfDay().roundFloorCopy().minusHours(hoursBackInTime);
+		Interval interval = new Interval(beginDateTime, currentDateTime);
+
+		int totalCount = 0;
+
+		final SortedMap<Date, Long> values = new TreeMap<Date, Long>(Collections.reverseOrder());
+		values.putAll(count.getValues());
+
+		for (Map.Entry<Date, Long> mapEntry : values.entrySet()) {
+			DateTime date = new DateTime(mapEntry.getKey());
+
+			if (interval.contains(date)) {
+				totalCount = totalCount + mapEntry.getValue().intValue();
+			}
+
+		}
+
+		return totalCount;
 	}
+
+	private  int getCountForLastXMinutes(String candidate, DateTime dateTime, int minutesBackInTime) {
+
+		RestTemplate restTemplate = new RestTemplate();
+		String url = "http://localhost:8080/metrics/aggregate-counters/" + candidate + "Count?resolution=minute";
+		AggregateCountsResource count = restTemplate.getForObject(url, AggregateCountsResource.class);
+
+		DateTime currentDateTime = dateTime.minuteOfHour().roundCeilingCopy();
+		DateTime beginDateTime = dateTime.minuteOfHour().roundFloorCopy().minusMinutes(minutesBackInTime);
+		Interval interval = new Interval(beginDateTime, currentDateTime);
+
+		int totalCount = 0;
+
+		final SortedMap<Date, Long> values = new TreeMap<Date, Long>(Collections.reverseOrder());
+		values.putAll(count.getValues());
+
+		for (Map.Entry<Date, Long> mapEntry : values.entrySet()) {
+			DateTime date = new DateTime(mapEntry.getKey());
+
+			if (interval.contains(date)) {
+				totalCount = totalCount + mapEntry.getValue().intValue();
+			}
+
+		}
+
+		return totalCount;
+	}
+
+	private  int getCountForDay(String candidate, DateMidnight dateMidnight) {
+
+		RestTemplate restTemplate = new RestTemplate();
+		String url = "http://localhost:8080/metrics/aggregate-counters/" + candidate + "Count";
+		AggregateCountsResource count = restTemplate.getForObject(url, AggregateCountsResource.class);
+
+		DateMidnight endOfDay = dateMidnight.plusDays(1);
+
+		Interval interval = new Interval(dateMidnight, endOfDay);
+
+		int totalCount = 0;
+
+		final SortedMap<Date, Long> values = new TreeMap<Date, Long>(Collections.reverseOrder());
+		values.putAll(count.getValues());
+
+		for (Map.Entry<Date, Long> mapEntry : values.entrySet()) {
+			DateTime date = new DateTime(mapEntry.getKey());
+
+			if (interval.contains(date)) {
+				totalCount = totalCount + mapEntry.getValue().intValue();
+			}
+
+		}
+
+		return totalCount;
+	}
+
 }

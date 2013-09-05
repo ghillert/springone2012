@@ -22,10 +22,10 @@ public class ElectionController implements InitializingBean, ResourceLoaderAware
 
 	@Value("${mapReduceOutputResourceName}")
 	private String resourceName;
-	
+
 	private String defaultResourceName = "classpath:/test-data/part-00000";
 	private ResourceLoader resourceLoader;
-	
+
 	@Autowired
 	private MapReduceResults mapReduceResults;
 
@@ -53,7 +53,7 @@ public class ElectionController implements InitializingBean, ResourceLoaderAware
 	public @ResponseBody Set<NameCountData> gardenhoseRecent() {
 		return getGardenHoseRecent();
 	}
-	
+
 	@RequestMapping(value="/twitter/gardenhose/recent/generate", method=RequestMethod.GET, produces="application/json")
 	public @ResponseBody String gardenhoseGenerateRecent() {
 		realTimeData.generateGardenHoseRecent();
@@ -87,6 +87,7 @@ public class ElectionController implements InitializingBean, ResourceLoaderAware
 		breakdownToday.add(realTimeData.getLastSixHours());
 		breakdownToday.add(realTimeData.getLastThreeHours());
 		breakdownToday.add(realTimeData.getLastHour());
+		breakdownToday.add(realTimeData.getLast15Minutes());
 		return breakdownToday;
 	}
 
@@ -119,7 +120,7 @@ public class ElectionController implements InitializingBean, ResourceLoaderAware
 		if (!resource.exists()) {
 			this.resourceName = this.defaultResourceName;
 		}
-		
+
 	}
 
 }

@@ -67,4 +67,11 @@ public class GroupedData {
 		bieberCount++;
 	}
 
+	@Override
+	public String toString() {
+		return "GroupedData [label=" + label + ", obamaCount=" + obamaCount
+				+ ", romneyCount=" + romneyCount + ", bieberCount="
+				+ bieberCount + "]";
+	}
+
 }

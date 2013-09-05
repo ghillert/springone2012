@@ -190,8 +190,8 @@
 							console.log(data);
 
 							var last6Hours = data[0];
-							var lastHour   = data[1];
-							var last15min  = data[2];
+							var lastHour   = data[2];
+							var last15min  = data[3];
 
 							generateHtml(last6Hours, "#daily-count-break-downs-last-6-hours");
 							generateHtml(lastHour,   "#daily-count-break-downs-last-hour");
