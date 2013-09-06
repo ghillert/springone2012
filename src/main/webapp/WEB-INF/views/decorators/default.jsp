@@ -63,8 +63,8 @@
 			<sitemesh:write property='body'/>
 			<hr/>
 			<footer>
-				<a class="brand" href="http://www.springsource.org/"><img alt="SpringSource"
-					title="SpringSource" src="${ctx}/assets/img/spring/SpringSource-logo.png"></a>
+				<a class="brand" href="http://www.spring.io/"><img alt="Spring"
+					title="Spring" src="${ctx}/assets/img/spring/spring-logo.png"></a>
 			</footer>
 		</div> <!-- /container -->
 

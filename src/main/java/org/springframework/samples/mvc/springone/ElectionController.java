@@ -56,7 +56,7 @@ public class ElectionController implements InitializingBean, ResourceLoaderAware
 
 	@RequestMapping(value="/twitter/gardenhose/recent/generate", method=RequestMethod.GET, produces="application/json")
 	public @ResponseBody String gardenhoseGenerateRecent() {
-		realTimeData.generateGardenHoseRecent();
+		//realTimeData.generateGardenHoseRecent();
 		return "ok";
 	}
 
@@ -78,7 +78,6 @@ public class ElectionController implements InitializingBean, ResourceLoaderAware
 	private List<MessageRate> getMessageRates() {
 		List<MessageRate> rates = new ArrayList<MessageRate>();
 		rates.add(realTimeData.getTweetRate());
-		rates.add(realTimeData.getHashTagHitRate());
 		return rates;
 	}
 

@@ -81,14 +81,12 @@
 							console.log(data);
 							var items = [];
 							var tweets = data[0].rate.toFixed(2);
-							var hashTagHits = data[1].rate.toFixed(2);
 
 							items.push($.mynamespace.gaugeHeader);
 
 							console.log(tweets);
 
 							items.push(['Tweets', parseFloat(tweets)]);
-							items.push(['# Hit Rate', parseFloat(hashTagHits)]);
 
 							console.log(items);
 
@@ -177,8 +175,7 @@
 				function drawChart() {
 					var data = google.visualization.arrayToDataTable([
 						['Label', 'Value'],
-						['Tweets', 0],
-						['# Hit Rate', 0],
+						['Tweets', 0]
 					]);
 
 					$.mynamespace.gaugeOptions = {

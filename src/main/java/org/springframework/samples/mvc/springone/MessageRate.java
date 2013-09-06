@@ -3,16 +3,16 @@ package org.springframework.samples.mvc.springone;
 import java.util.Random;
 
 public class MessageRate {
-	
+
 	private static final Random random = new Random();
-	
+
 	private String label;
-	
-	private float rate;
-	
-	private float baseRate;
-	
-	public MessageRate(String label, float rate) {
+
+	private double rate;
+
+	private double baseRate;
+
+	public MessageRate(String label, double rate) {
 		super();
 		this.label = label;
 		this.rate = rate;
@@ -27,17 +27,17 @@ public class MessageRate {
 		this.label = label;
 	}
 
-	public float getRate() {
+	public double getRate() {
 		return this.rate;
 	}
 
-	public void setRate(float rate) {
+	public void setRate(double rate) {
 		this.rate = rate;
 	}
 
 	public void adjustRate() {
-		rate =  this.baseRate + new Float(Math.abs(random.nextGaussian()));
+		rate =  this.baseRate + new Double(Math.abs(random.nextGaussian()));
 	}
-	
-	
+
+
 }

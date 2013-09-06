@@ -7,6 +7,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -15,7 +16,8 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import org.apache.commons.lang.math.NumberUtils;
+import javax.management.MalformedObjectNameException;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateMidnight;
@@ -23,14 +25,13 @@ import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
-import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
-import org.springframework.data.redis.connection.srp.SrpConnectionFactory;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
-import org.springframework.data.redis.core.ZSetOperations.TypedTuple;
-import org.springframework.util.StringUtils;
+import org.jolokia.client.J4pClient;
+import org.jolokia.client.exception.J4pException;
+import org.jolokia.client.request.J4pReadRequest;
+import org.jolokia.client.request.J4pReadResponse;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.xd.rest.client.domain.metrics.AggregateCountsResource;
+import org.springframework.xd.rest.client.domain.metrics.FieldValueCounterResource;
 
 public class RealtimeDataCollector {
 
@@ -38,89 +39,62 @@ public class RealtimeDataCollector {
 
 	private DateTimeFormatter dailyFormatter = DateTimeFormat.forPattern("yyyy-MM-dd");
 
-	private DateTimeFormatter hourlyFormatter = DateTimeFormat.forPattern("yyyy-MM-dd-HH");
-
-	private int todayObama = 4304;
-
-	private int todayRomney = 4304;
-
-	private int todayBieber = 13450;
-
-	//private GroupedData lastFewHours;
-
-	//private GroupedData lastHour;
-
-	//private GroupedData lastSubHour;
-
-	private MessageRate tweetRate;
-
-	private MessageRate hashTagHitRate;
-
-	private StringRedisTemplate redisTemplate;
-
-	private StringRedisTemplate jedisTemplate;
-
 	public RealtimeDataCollector() {
-
-		//lastFewHours = new GroupedData("last6").bieberCount(600).obama(600).romney(2400);
-		//lastHour = new GroupedData("lasthour").bieberCount(100).obama(100).romney(400);
-		//lastSubHour = new GroupedData("lastsubhour").bieberCount(25).obama(25).romney(100);
-
-		tweetRate = new MessageRate("tweets", 120);
-		hashTagHitRate = new MessageRate("hashtag-hit", 10);
-
-		//TODO cleanup, configure with DI
-		SrpConnectionFactory connectionFactory = new SrpConnectionFactory();
-		connectionFactory.afterPropertiesSet();
-		StringRedisTemplate stringRedisTemplate = new StringRedisTemplate();
-		stringRedisTemplate.setConnectionFactory(connectionFactory);
-		stringRedisTemplate.afterPropertiesSet();
-		this.redisTemplate = stringRedisTemplate;
-
-		//opsForHash.entries didn't work for SrpConnectionFactory - debug later.
-
-		JedisConnectionFactory cf = new JedisConnectionFactory();
-		cf.afterPropertiesSet();
-		jedisTemplate = new StringRedisTemplate();
-		jedisTemplate.setConnectionFactory(cf);
-		jedisTemplate.afterPropertiesSet();
 	}
 
 	public MessageRate getTweetRate() {
-		tweetRate.adjustRate();
-		return tweetRate;
-	}
 
-	public MessageRate getHashTagHitRate() {
-		hashTagHitRate.adjustRate();
-		return hashTagHitRate;
+		final J4pClient j4pClient = new J4pClient("http://localhost:8779/jolokia/");
+		final J4pReadRequest req;
+
+		try {
+			req = new J4pReadRequest("xd.tweetStream:type=MessageChannel,name=output,index=0,module=twitterstream","MeanSendRate");
+		}
+		catch (MalformedObjectNameException e) {
+			throw new IllegalStateException(e);
+		}
+
+		J4pReadResponse resp = null;
+		try {
+			resp = j4pClient.execute(req);
+		}
+		catch (J4pException e) {
+			log.warn(e.getMessage());
+		}
+
+		if (resp != null) {
+			log.debug("Message Rate:" + resp.getValue());
+			return new MessageRate("tweets", (Double) resp.getValue());
+		}
+
+		log.warn("No Message Rate Respponse received.");
+		return new MessageRate("tweets", 0d);
+
 	}
 
 	public Set<NameCountData> getGardenHoseRecent() {
-		Set<TypedTuple<String>> results = redisTemplate.opsForZSet().rangeByScoreWithScores("hashtags", 0, 100);
 
-		TreeSet<NameCountData> convertedResults = new TreeSet<NameCountData>();
-		for (TypedTuple<String> typedTuple : results) {
-			try {
-			String tag = typedTuple.getValue();
-			String score = typedTuple.getScore().toString();
-			if (StringUtils.hasText(tag) && StringUtils.hasText(score)) {
-				//sometimes hastags are numbers
-				if (NumberUtils.isNumber(tag) && NumberUtils.isNumber(score) && isPureAscii(tag)) {
-					convertedResults.add(new NameCountData(tag, typedTuple.getScore().intValue()));
-				} else if (NumberUtils.isNumber(tag) && !NumberUtils.isNumber(score)) {
-					// in Right to left languages, the order is reversed.
-					// so tag would be a number and often score would be text
-					convertedResults.add(new NameCountData(score, Double.valueOf(tag).intValue()));
-				} else {
-					convertedResults.add(new NameCountData(tag, typedTuple.getScore().intValue()));
-				}
+		RestTemplate restTemplate = new RestTemplate();
+		String url = "http://localhost:8080/metrics/field-value-counters/hashtags";
+		FieldValueCounterResource metricsResource = restTemplate.getForObject(url, FieldValueCounterResource.class);
+
+		final Map<String, Double> fieldValueCounts = metricsResource.getFieldValueCounts();
+
+		FieldValueComparator fvc = new FieldValueComparator(fieldValueCounts);
+		TreeMap<String, Double> sortedFvc = new TreeMap<String, Double>(fvc);
+		sortedFvc.putAll(fieldValueCounts);
+
+		int i = 1;
+		TreeSet<NameCountData> results = new TreeSet<NameCountData>();
+		for (Map.Entry<String, Double> entry : sortedFvc.entrySet()) {
+			results.add(new NameCountData(entry.getKey(), entry.getValue().intValue()));
+			if (i == 10) {
+				break;
 			}
-			} catch (NumberFormatException e) {
-				log.error("NumberFormatException" ,e);
-			}
+			i++;
 		}
-		return convertedResults;
+
+		return results;
 	}
 
 	  public static boolean isPureAscii(String v) {
@@ -137,17 +111,17 @@ public class RealtimeDataCollector {
 		  }
 
 
-	public void generateGardenHoseRecent() {
-		addToHashTag("ReplaceAColdplaySongWithLlama", 100.0);
-		addToHashTag("12ekimmucizesiEnginAkyurek", 90.0);
-		addToHashTag("ATENÇÃO", 30.0);
-		addToHashTag("BEAUTYandaBEAT", 1.0);
+//	public void generateGardenHoseRecent() {
+//		addToHashTag("ReplaceAColdplaySongWithLlama", 100.0);
+//		addToHashTag("12ekimmucizesiEnginAkyurek", 90.0);
+//		addToHashTag("ATENÇÃO", 30.0);
+//		addToHashTag("BEAUTYandaBEAT", 1.0);
+//
+//	}
 
-	}
-
-	private void addToHashTag(String name, Double value) {
-		redisTemplate.opsForZSet().add("hashtags", name, value);
-	}
+//	private void addToHashTag(String name, Double value) {
+//		redisTemplate.opsForZSet().add("hashtags", name, value);
+//	}
 
 	public List<NameCountData> getTodayData() {
 		List<NameCountData> todayData = new ArrayList<NameCountData>();
@@ -161,50 +135,48 @@ public class RealtimeDataCollector {
 		return "election:" + candidate + ":" + dailyFormatter.print(dateTime);
 	}
 
-	public int getTotalForCandidateByDate(String candidate, DateTime dateTime) {
-		String dailyTotKey = "tot:" + this.getDailyKey(candidate, dateTime);
-		String dailyTotValue = redisTemplate.opsForValue().get(dailyTotKey);
-
-		if (dailyTotValue != null) {
-			return Double.valueOf(redisTemplate.opsForValue().get(dailyTotKey)).intValue();
-		}
-
-		return 0;
-
-	}
+//	public int getTotalForCandidateByDate(String candidate, DateTime dateTime) {
+//		String dailyTotKey = "tot:" + this.getDailyKey(candidate, dateTime);
+//		String dailyTotValue = redisTemplate.opsForValue().get(dailyTotKey);
+//
+//		if (dailyTotValue != null) {
+//			return Double.valueOf(redisTemplate.opsForValue().get(dailyTotKey)).intValue();
+//		}
+//
+//		return 0;
+//
+//	}
 
 	public List<GroupedData> getHistoricalData() {
 
-		DateTime dateTime = new DateTime();
+		final DateTime dateTime = new DateTime();
 
-		DateTimeFormatter formatter = DateTimeFormat.forPattern("MM/dd/yyyy");
+		final DateMidnight dateTime1 = new DateMidnight(dateTime.minusDays(3));
+		final DateMidnight dateTime2 = new DateMidnight(dateTime.minusDays(2));
+		final DateMidnight dateTime3 = new DateMidnight(dateTime.minusDays(1));
+		final DateMidnight dateTime4 = new DateMidnight(dateTime);
 
-		DateMidnight dateTime1 = new DateMidnight(dateTime.minusDays(3));
-		DateMidnight dateTime2 = new DateMidnight(dateTime.minusDays(2));
-		DateMidnight dateTime3 = new DateMidnight(dateTime.minusDays(1));
-		DateMidnight dateTime4 = new DateMidnight(dateTime);
-
-		GroupedData groupedData1 = new GroupedData(dateTime1.toString(formatter)) //"10/12/2012"
+		final GroupedData groupedData1 = new GroupedData(dateTime1.toString(dailyFormatter))
 			.bieberCount(this.getCountForDay("bieber", dateTime1))
 			.obama(this.getCountForDay("obama", dateTime1))
 			.romney(this.getCountForDay("romney", dateTime1));
 
-		GroupedData groupedData2 = new GroupedData(dateTime2.toString(formatter))
-		.bieberCount(this.getCountForDay("bieber", dateTime2))
-		.obama(this.getCountForDay("obama", dateTime2))
-		.romney(this.getCountForDay("romney", dateTime2));
+		final GroupedData groupedData2 = new GroupedData(dateTime2.toString(dailyFormatter))
+			.bieberCount(this.getCountForDay("bieber", dateTime2))
+			.obama(this.getCountForDay("obama", dateTime2))
+			.romney(this.getCountForDay("romney", dateTime2));
 
-		GroupedData groupedData3 = new GroupedData(dateTime3.toString(formatter))
-		.bieberCount(this.getCountForDay("bieber", dateTime3))
-		.obama(this.getCountForDay("obama", dateTime3))
-		.romney(this.getCountForDay("romney", dateTime3));
+		final GroupedData groupedData3 = new GroupedData(dateTime3.toString(dailyFormatter))
+			.bieberCount(this.getCountForDay("bieber", dateTime3))
+			.obama(this.getCountForDay("obama", dateTime3))
+			.romney(this.getCountForDay("romney", dateTime3));
 
-		GroupedData groupedData4 = new GroupedData(dateTime4.toString(formatter))
-		.bieberCount(this.getCountForDay("bieber", dateTime4))
-		.obama(this.getCountForDay("obama", dateTime4))
-		.romney(this.getCountForDay("romney", dateTime4));
+		final GroupedData groupedData4 = new GroupedData(dateTime4.toString(dailyFormatter))
+			.bieberCount(this.getCountForDay("bieber", dateTime4))
+			.obama(this.getCountForDay("obama", dateTime4))
+			.romney(this.getCountForDay("romney", dateTime4));
 
-		List<GroupedData> weeklyData = new ArrayList<GroupedData>();
+		final List<GroupedData> weeklyData = new ArrayList<GroupedData>();
 		weeklyData.add(groupedData1);
 		weeklyData.add(groupedData2);
 		weeklyData.add(groupedData3);
@@ -357,6 +329,29 @@ public class RealtimeDataCollector {
 		}
 
 		return totalCount;
+	}
+
+	private class FieldValueComparator implements Comparator<String> {
+
+		Map<String, Double> fieldValueCounts;
+
+		public FieldValueComparator(Map<String, Double> fieldValueCounts) {
+			this.fieldValueCounts = fieldValueCounts;
+		}
+
+		@Override
+		public int compare(String a, String b) {
+			if (fieldValueCounts.get(a) > fieldValueCounts.get(b)) {
+				return -1;
+			}
+			if (fieldValueCounts.get(a) == fieldValueCounts.get(b)) {
+				return 0;
+			}
+			else {
+				return 1;
+			}
+		}
+
 	}
 
 }
