@@ -2,13 +2,10 @@
 
 URL="http://localhost:8080"
 
-curl -v -H "Accept: application/json" -d name=twittersearchObama -d definition="twittersearch+--query='%23obama'+%7C+file" $URL/streams
-curl -v -H "Accept: application/json" -d name=twittersearchBieber -d definition="twittersearch+--query='%23romney'+%7C+file" $URL/streams
-curl -v -H "Accept: application/json" -d name=twittersearchRomney -d definition="twittersearch+--query='%23bieber'+%7C+file" $URL/streams
-
-curl -v -H "Accept: application/json" -d name=obamaCount -d definition="tap+twittersearchObama+%7C+aggregatecounter+--fieldName=entities.hashTags.text+--counterName=obamaAggregatedCounter"  "$URL/taps"
-curl -v -H "Accept: application/json" -d name=bieberCount -d definition="tap+twittersearchBieber+%7C+aggregatecounter+--fieldName=entities.hashTags.text+--counterName=bieberAggregatedCounter"  "$URL/taps"
-curl -v -H "Accept: application/json" -d name=romneyCount -d definition="tap+twittersearchRomney+%7C+aggregatecounter+--fieldName=entities.hashTags.text+--counterName=romneyAggregatedCounter"  "$URL/taps"
+curl -v -H "Accept: application/json" -d name=ts -d definition="twittersearch+--query='%23obama+OR+%23romney+OR+%23bieber'+%7C+file" $URL/streams
+curl -v -H "Accept: application/json" -d name=obamatap      -d definition="%3Atap%3Ats%20%3E%20%20filter%20--expression%3Dpayload.entities.hashTags.%21%5Btext.toLowerCase%28T%28java.util.Locale%29.ENGLISH%29%5D.contains%28%27obama%27%29%20%7C%20aggregatecounter%20--name%3DobamaAggregatedCounter"  "$URL/streams"
+curl -v -H "Accept: application/json" -d name=romneytap     -d definition="%3Atap%3Ats%20%3E%20%20filter%20--expression%3Dpayload.entities.hashTags.%21%5Btext.toLowerCase%28T%28java.util.Locale%29.ENGLISH%29%5D.contains%28%27romney%27%29%20%7C%20aggregatecounter%20--name%3DromneyAggregatedCounter"  "$URL/streams"
+curl -v -H "Accept: application/json" -d name=biebertap     -d definition="%3Atap%3Ats%20%3E%20%20filter%20--expression%3Dpayload.entities.hashTags.%21%5Btext.toLowerCase%28T%28java.util.Locale%29.ENGLISH%29%5D.contains%28%27bieber%27%29%20%7C%20aggregatecounter%20--name%3DbieberAggregatedCounter"  "$URL/streams"
 
 curl -v -H "Accept: application/json" -d name=tweetStream -d definition=twitterstream+%7C+file "$URL/streams"
-curl -v -H "Accept: application/json" -d name=tweetStreamTagCount -d definition="tap+tweetStream+%7C+field-value-counter+--fieldName=entities.hashtags.text+--counterName=hashtags" "$URL/taps"
+curl -v -H "Accept: application/json" -d name=tweetStreamTagCount -d definition="%3Atap%3AtweetStream%20%3E%20%20field-value-counter+--fieldName=entities.hashtags.text+--counterName=hashtags" "$URL/streams"

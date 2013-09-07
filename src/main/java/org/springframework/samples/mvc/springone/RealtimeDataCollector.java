@@ -44,7 +44,7 @@ public class RealtimeDataCollector {
 
 	public MessageRate getTweetRate() {
 
-		final J4pClient j4pClient = new J4pClient("http://localhost:8779/jolokia/");
+		final J4pClient j4pClient = new J4pClient("http://localhost:8778/jolokia/");
 		final J4pReadRequest req;
 
 		try {
@@ -226,7 +226,7 @@ public class RealtimeDataCollector {
 
 		DateTime dateTime = new DateTime();
 		RestTemplate restTemplate = new RestTemplate();
-		String url = "http://localhost:8080/metrics/aggregate-counters/" + candidate + "Count";
+		String url = "http://localhost:8080/metrics/aggregate-counters/" + candidate + "AggregatedCounter";
 		AggregateCountsResource count = restTemplate.getForObject(url, AggregateCountsResource.class);
 
 		DateTime currentDateTime = dateTime.hourOfDay().roundCeilingCopy();
@@ -253,7 +253,7 @@ public class RealtimeDataCollector {
 	private  int getCountForLastXHours(String candidate, DateTime dateTime, int hoursBackInTime) {
 
 		RestTemplate restTemplate = new RestTemplate();
-		String url = "http://localhost:8080/metrics/aggregate-counters/" + candidate + "Count";
+		String url = "http://localhost:8080/metrics/aggregate-counters/" + candidate + "AggregatedCounter";
 		AggregateCountsResource count = restTemplate.getForObject(url, AggregateCountsResource.class);
 
 		DateTime currentDateTime = dateTime.hourOfDay().roundCeilingCopy();
@@ -280,7 +280,7 @@ public class RealtimeDataCollector {
 	private  int getCountForLastXMinutes(String candidate, DateTime dateTime, int minutesBackInTime) {
 
 		RestTemplate restTemplate = new RestTemplate();
-		String url = "http://localhost:8080/metrics/aggregate-counters/" + candidate + "Count?resolution=minute";
+		String url = "http://localhost:8080/metrics/aggregate-counters/" + candidate + "AggregatedCounter?resolution=minute";
 		AggregateCountsResource count = restTemplate.getForObject(url, AggregateCountsResource.class);
 
 		DateTime currentDateTime = dateTime.minuteOfHour().roundCeilingCopy();
@@ -307,7 +307,7 @@ public class RealtimeDataCollector {
 	private  int getCountForDay(String candidate, DateMidnight dateMidnight) {
 
 		RestTemplate restTemplate = new RestTemplate();
-		String url = "http://localhost:8080/metrics/aggregate-counters/" + candidate + "Count";
+		String url = "http://localhost:8080/metrics/aggregate-counters/" + candidate + "AggregatedCounter";
 		AggregateCountsResource count = restTemplate.getForObject(url, AggregateCountsResource.class);
 
 		DateMidnight endOfDay = dateMidnight.plusDays(1);
