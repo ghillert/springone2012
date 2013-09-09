@@ -34,12 +34,6 @@
 				</div>
 			</div>
 		</div>
-		<div class="row">
-			<div class="span12" id="message-rates">
-				<h3>Message Rates</h3>
-				<div id='gauge_chart_div' style="width: 500px; margin-left: auto; margin-right: auto;"></div>
-			</div>
-		</div>
 
 		<content tag='bottom'>
 
@@ -73,27 +67,6 @@
 						gaugeOptions : null,
 						gaugeHeader: ['Label', 'Value']
 					};
-
-					function updateMessageRates() {
-
-						$.getJSON('election/monitoring/rates', function(data) {
-
-							console.log(data);
-							var items = [];
-							var tweets = data[0].rate.toFixed(2);
-
-							items.push($.mynamespace.gaugeHeader);
-
-							console.log(tweets);
-
-							items.push(['Tweets', parseFloat(tweets)]);
-
-							console.log(items);
-
-							var data = google.visualization.arrayToDataTable(items);
-							$.mynamespace.gauge.draw(data, $.mynamespace.gaugeOptions	);
-						});
-					}
 
 					var total = 0;
 
@@ -157,7 +130,6 @@
 					}
 
 					function updateAll() {
-						updateMessageRates();
 						updateGardenHoseData("#garden-hose-data-recent", "twitter/gardenhose/recent");
 						updateGardenHoseData("#garden-hose-data-historical", "twitter/gardenhose/historical");
 						setTimeout(updateAll, 5000);
@@ -168,28 +140,6 @@
 
 			<script type="text/javascript" src="http://www.google.com/jsapi"></script>
 
-			<script type='text/javascript'>
-				google.load('visualization', '1', {packages:['gauge']});
-				google.setOnLoadCallback(drawChart);
-
-				function drawChart() {
-					var data = google.visualization.arrayToDataTable([
-						['Label', 'Value'],
-						['Tweets', 0]
-					]);
-
-					$.mynamespace.gaugeOptions = {
-						width: 500, height: 200,
-						redFrom: 130, redTo: 150,
-						yellowFrom:100, yellowTo: 130,
-						minorTicks: 5,
-						max: 150
-					};
-
-					$.mynamespace.gauge = new google.visualization.Gauge(document.getElementById('gauge_chart_div'));
-					$.mynamespace.gauge.draw(data, $.mynamespace.gaugeOptions);
-				};
-			</script>
 		</content>
 	</body>
 </html>
